@@ -5,7 +5,8 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function App() {
   // Получаем URL бэкенда из переменных окружения
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  console.log('Backend URL:', BACKEND_URL);
   
   // Состояния приложения
   const [activeTab, setActiveTab] = useState('ai-tab');
