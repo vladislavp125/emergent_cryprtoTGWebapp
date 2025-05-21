@@ -8,8 +8,8 @@ import random
 from typing import List, Optional
 
 # Импортируем модули приложения
-from database import get_db, engine
-from models import Base, User, Server, Transaction, Trade, Task, UserTask
+from .database import get_db, engine
+from .models import Base, User, Server, Transaction, Trade, Task, UserTask
 import schemas
 import models
 
