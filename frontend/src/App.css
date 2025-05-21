@@ -1,38 +1,250 @@
-.App {
-    text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Orbitron:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary: #00C9B1;
+    --secondary: #FF9A3C;
+    --dark: #1A1A2E;
+    --darker: #16213E;
+    --light: #E8F9FD;
 }
 
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--darker);
+    color: var(--light);
+    height: 100vh;
+    overflow-x: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.orbitron {
+    font-family: 'Orbitron', sans-serif;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
+.eva-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    font-size: calc(10px + 2vmin);
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.eva {
+    width: 180px;
+    height: 180px;
+    background-color: #FFFFFF;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 201, 177, 0.6);
+    animation: float 4s ease-in-out infinite;
+}
+
+.eva-eye {
+    position: absolute;
+    width: 40px;
+    height: 60px;
+    background-color: #1A1A2E;
+    border-radius: 50%;
+    top: 60px;
+}
+
+.eva-eye.left {
+    left: 50px;
+}
+
+.eva-eye.right {
+    right: 50px;
+}
+
+.eva-eye::before {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    top: 15px;
+    left: 10px;
+    animation: blink 4s ease-in-out infinite;
+}
+
+.server-card {
+    background: linear-gradient(135deg, var(--dark), var(--darker));
+    border: 1px solid var(--primary);
+    transition: all 0.3s ease;
+}
+
+.server-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 201, 177, 0.3);
+}
+
+.nav-btn {
+    transition: all 0.3s ease;
+}
+
+.nav-btn.active {
+    color: var(--primary);
+    border-top: 2px solid var(--primary);
+}
+
+.nav-btn:hover {
+    color: var(--primary);
+}
+
+.progress-bar {
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+.glow-text {
+    text-shadow: 0 0 10px rgba(0, 201, 177, 0.7);
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 201, 177, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(0, 201, 177, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 201, 177, 0); }
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    48% { opacity: 1; }
+    50% { opacity: 0.2; }
+    52% { opacity: 1; }
+    98% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.transaction-card {
+    background: rgba(26, 26, 46, 0.7);
+    border-left: 3px solid var(--primary);
+    transition: all 0.3s ease;
+}
+
+.transaction-card:hover {
+    background: rgba(26, 26, 46, 0.9);
+}
+
+.trade-card {
+    background: rgba(26, 26, 46, 0.7);
+    border-left: 3px solid #4CAF50;
+    transition: all 0.3s ease;
+}
+
+.trade-card:hover {
+    background: rgba(26, 26, 46, 0.9);
+}
+
+.copy-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.ton-badge {
+    background-color: #0088CC;
     color: white;
 }
 
-.App-link {
-    color: #61dafb;
+.usdt-badge {
+    background-color: #26A17B;
+    color: white;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
+/* Swipeable tabs styles */
+.swipe-tabs-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.swipe-tabs-header {
+    display: flex;
+    border-bottom: 1px solid #2D3748;
+    margin-bottom: 1rem;
+}
+
+.swipe-tab-btn {
+    flex: 1;
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 500;
+    color: #718096;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.swipe-tab-btn.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+}
+
+.swipe-tabs-content {
+    display: flex;
+    transition: transform 0.3s ease;
+    width: 200%;
+}
+
+.swipe-tab-panel {
+    width: 50%;
+    padding: 0 0.5rem;
+}
+
+.swipe-tab-panel.active {
+    display: block;
+}
+
+@media (prefers-reduced-motion) {
+    .eva {
+        animation: none;
     }
-    to {
-        transform: rotate(360deg);
+    
+    .pulse {
+        animation: none;
+    }
+    
+    .tab-content.active {
+        animation: none;
     }
 }
