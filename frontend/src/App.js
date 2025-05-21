@@ -38,6 +38,7 @@ function App() {
   const fetchStats = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/stats`);
+      console.log('Stats response:', response.data);
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -47,6 +48,7 @@ function App() {
   const fetchServers = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/servers`);
+      console.log('Servers response:', response.data);
       setServers(response.data);
     } catch (error) {
       console.error('Error fetching servers:', error);
@@ -56,6 +58,7 @@ function App() {
   const fetchTrades = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/trades`);
+      console.log('Trades response:', response.data);
       setTrades(response.data);
     } catch (error) {
       console.error('Error fetching trades:', error);
