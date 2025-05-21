@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 # Создаем все таблицы базы данных при запуске (если их еще нет)
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 # API маршруты
 
