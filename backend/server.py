@@ -38,14 +38,14 @@ def read_root():
 
 @app.get("/api/user/{user_id}", response_model=schemas.User)
 def get_user(user_id: str, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
 @app.get("/api/user/{user_id}/details", response_model=schemas.UserWithDetails)
 def get_user_details(user_id: str, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
@@ -54,7 +54,7 @@ def get_user_details(user_id: str, db: Session = Depends(get_db)):
 def get_current_user(db: Session = Depends(get_db)):
     # В будущем здесь будет проверка аутентификации через Telegram
     # Пока возвращаем тестового пользователя
-    db_user = db.query(User).first()
+    db_user = db.query(models.User).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="No users in database")
     return db_user
@@ -64,14 +64,14 @@ def get_current_user(db: Session = Depends(get_db)):
 @app.get("/api/stats", response_model=schemas.StatsResponse)
 def get_stats(db: Session = Depends(get_db)):
     # Получаем текущего пользователя
-    user = db.query(User).first()
+    user = db.query(models.User).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     # Получаем количество активных серверов
-    active_servers = db.query(Server).filter(
-        Server.user_id == user.id, 
-        Server.is_active == True
+    active_servers = db.query(models.Server).filter(
+        models.Server.user_id == user.id, 
+        models.Server.is_active == True
     ).count()
     
     # Создаем ответ с статистикой
@@ -89,13 +89,13 @@ def get_stats(db: Session = Depends(get_db)):
 
 @app.get("/api/servers", response_model=List[schemas.Server])
 def get_servers(db: Session = Depends(get_db)):
-    user = db.query(User).first()  # Текущий пользователь
-    servers = db.query(Server).filter(Server.user_id == user.id).all()
+    user = db.query(models.User).first()  # Текущий пользователь
+    servers = db.query(models.Server).filter(models.Server.user_id == user.id).all()
     return servers
 
 @app.post("/api/servers/rent", response_model=schemas.Server)
 def rent_server(request: schemas.RentServerRequest, db: Session = Depends(get_db)):
-    server = db.query(Server).filter(Server.id == request.server_id).first()
+    server = db.query(models.Server).filter(models.Server.id == request.server_id).first()
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     
@@ -113,7 +113,7 @@ def rent_server(request: schemas.RentServerRequest, db: Session = Depends(get_db
 
 @app.get("/api/trades", response_model=List[schemas.Trade])
 def get_trades(limit: int = 10, db: Session = Depends(get_db)):
-    trades = db.query(Trade).order_by(Trade.timestamp.desc()).limit(limit).all()
+    trades = db.query(models.Trade).order_by(models.Trade.timestamp.desc()).limit(limit).all()
     return trades
 
 @app.get("/api/trades/live", response_model=schemas.Trade)
@@ -129,7 +129,7 @@ def get_live_trade(db: Session = Depends(get_db)):
     exit_price = base_price * (1 + profit_percentage / 100)
     
     # Создаем объект сделки
-    trade = Trade(
+    trade = models.Trade(
         id=str(uuid.uuid4()),
         pair=pair,
         entry_price=entry_price,
@@ -149,24 +149,24 @@ def get_live_trade(db: Session = Depends(get_db)):
 
 @app.get("/api/transactions", response_model=List[schemas.Transaction])
 def get_transactions(transaction_type: Optional[str] = None, db: Session = Depends(get_db)):
-    user = db.query(User).first()  # Текущий пользователь
+    user = db.query(models.User).first()  # Текущий пользователь
     
-    query = db.query(Transaction).filter(Transaction.user_id == user.id)
+    query = db.query(models.Transaction).filter(models.Transaction.user_id == user.id)
     if transaction_type:
-        query = query.filter(Transaction.type == transaction_type)
+        query = query.filter(models.Transaction.type == transaction_type)
     
-    transactions = query.order_by(Transaction.timestamp.desc()).all()
+    transactions = query.order_by(models.Transaction.timestamp.desc()).all()
     return transactions
 
 @app.post("/api/transactions/withdraw", response_model=schemas.Transaction)
 def withdraw(request: schemas.WithdrawRequest, db: Session = Depends(get_db)):
-    user = db.query(User).first()  # Текущий пользователь
+    user = db.query(models.User).first()  # Текущий пользователь
     
     if user.available_balance < request.amount:
         raise HTTPException(status_code=400, detail="Insufficient balance")
     
     # Создаем транзакцию
-    transaction = Transaction(
+    transaction = models.Transaction(
         id=str(uuid.uuid4()),
         type="withdrawal",
         amount=request.amount,
@@ -189,22 +189,22 @@ def withdraw(request: schemas.WithdrawRequest, db: Session = Depends(get_db)):
 
 @app.get("/api/tasks", response_model=List[schemas.UserTask])
 def get_tasks(task_type: Optional[str] = None, db: Session = Depends(get_db)):
-    user = db.query(User).first()  # Текущий пользователь
+    user = db.query(models.User).first()  # Текущий пользователь
     
-    query = db.query(UserTask).join(Task).filter(UserTask.user_id == user.id)
+    query = db.query(models.UserTask).join(models.Task).filter(models.UserTask.user_id == user.id)
     if task_type:
-        query = query.filter(Task.type == task_type)
+        query = query.filter(models.Task.type == task_type)
     
     user_tasks = query.all()
     return user_tasks
 
 @app.post("/api/tasks/{task_id}/claim")
 def claim_task(task_id: str, db: Session = Depends(get_db)):
-    user = db.query(User).first()  # Текущий пользователь
+    user = db.query(models.User).first()  # Текущий пользователь
     
-    user_task = db.query(UserTask).filter(
-        UserTask.user_id == user.id,
-        UserTask.task_id == task_id
+    user_task = db.query(models.UserTask).filter(
+        models.UserTask.user_id == user.id,
+        models.UserTask.task_id == task_id
     ).first()
     
     if not user_task:
@@ -217,7 +217,7 @@ def claim_task(task_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Reward already claimed")
     
     # Получаем информацию о задании
-    task = db.query(Task).filter(Task.id == task_id).first()
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
     
     # Начисляем награду
     user.available_balance += task.reward
@@ -234,7 +234,7 @@ def claim_task(task_id: str, db: Session = Depends(get_db)):
 
 @app.get("/api/referrals/stats", response_model=schemas.ReferralStats)
 def get_referral_stats(db: Session = Depends(get_db)):
-    user = db.query(User).first()  # Текущий пользователь
+    user = db.query(models.User).first()  # Текущий пользователь
     
     # В реальном приложении здесь будет код для получения статистики рефералов
     # Для демонстрации используем тестовые данные
@@ -251,7 +251,7 @@ def get_referral_stats(db: Session = Depends(get_db)):
 def startup_db_client():
     try:
         db = next(get_db())
-        user_count = db.query(User).count()
+        user_count = db.query(models.User).count()
         
         if user_count == 0:
             from setup_db import create_mock_data
