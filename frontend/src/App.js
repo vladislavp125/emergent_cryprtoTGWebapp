@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import {TonConnectButton} from "@tonconnect/ui-react";
+
 
 function App() {
   // Получаем URL бэкенда из переменных окружения
@@ -190,6 +192,7 @@ function App() {
       {/* Основной контент */}
       <div className="flex-1 overflow-y-auto p-4 pb-20">
         {/* AI Tab (Default) */}
+        <TonConnectButton />
         <div id="ai-tab" className={`tab-content ${activeTab === 'ai-tab' ? 'active' : ''}`}>
           <div className="eva-container">
             <div className="eva">
@@ -197,7 +200,7 @@ function App() {
               <div className="eva-eye right"></div>
             </div>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-center orbitron glow-text mb-2">EVA AI TRADER</h1>
           <p className="text-center text-gray-300 mb-6">Advanced trading algorithm powered by artificial intelligence</p>
           
