@@ -1,4 +1,6 @@
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from models import Base
 from database import DATABASE_URL
 import os
@@ -21,7 +23,6 @@ def create_tables():
     print("Таблицы созданы успешно")
 
 def create_mock_data():
-    from sqlalchemy.orm import sessionmaker
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     

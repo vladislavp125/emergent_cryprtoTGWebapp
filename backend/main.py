@@ -4,14 +4,13 @@ from sqlalchemy.orm import Session
 import os
 from datetime import datetime, timedelta
 import uuid
-#from app import random
+import random
 from typing import List, Optional
 
 # Импортируем модули приложения
 from database import get_db, engine
 from models import Base, User, Server, Transaction, Trade, Task, UserTask
-from app import schemas
-from .auth import get_current_active_user, ton_connect_auth, session_middleware
+import schemas
 
 # Создаем экземпляр FastAPI
 app = FastAPI(title="EVA AI Trade Bot API")
@@ -25,9 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Добавляем middleware для сессии
-app.middleware("http")(session_middleware)
-
 # Создаем все таблицы базы данных при запуске (если их еще нет)
 Base.metadata.create_all(bind=engine)
 
@@ -37,60 +33,46 @@ Base.metadata.create_all(bind=engine)
 def read_root():
     return {"message": "EVA AI Trade Bot API"}
 
-# Public endpoints (no authentication required)
-
-# Protected endpoints (require authentication)
-
 # User API
 
 @app.get("/api/user/{user_id}", response_model=schemas.User)
-def get_user(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+def get_user(user_id: str, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
 @app.get("/api/user/{user_id}/details", response_model=schemas.UserWithDetails)
-def get_user_details(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+def get_user_details(user_id: str, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
 @app.get("/api/user/current", response_model=schemas.User)
-def get_current_user(current_user: User = Depends(get_current_active_user)):
-    return current_user
-
-# TON Connect API
-
-@app.post("/api/auth/ton-connect")
-async def ton_connect(request: schemas.TonConnectRequest, db: Session = Depends(get_db)):
-    # Authenticate the user and get the token
-    auth_response = await ton_connect_auth(request, db)
-
-    # Store the user in the session
-    user = db.query(User).filter(User.wallet_address == request.wallet_address).first()
-    if user:
-        # Store the user in the session
-        request.state.user = user
-
-    return auth_response
+def get_current_user(db: Session = Depends(get_db)):
+    # В будущем здесь будет проверка аутентификации через Telegram
+    # Пока возвращаем тестового пользователя
+    db_user = db.query(User).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="No users in database")
+    return db_user
 
 # Stats API
 
 @app.get("/api/stats", response_model=schemas.StatsResponse)
-def get_stats(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def get_stats(db: Session = Depends(get_db)):
     # Получаем текущего пользователя
-    user = db.query(User).filter(User.id == current_user.id).first()
+    user = db.query(User).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
+    
     # Получаем количество активных серверов
     active_servers = db.query(Server).filter(
-        Server.user_id == user.id,
+        Server.user_id == user.id, 
         Server.is_active == True
     ).count()
-
+    
     # Создаем ответ с статистикой
     return {
         "total_earnings": user.total_earnings,
@@ -105,45 +87,46 @@ def get_stats(current_user: User = Depends(get_current_active_user), db: Session
 # Servers API
 
 @app.get("/api/servers", response_model=List[schemas.Server])
-def get_servers(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    servers = db.query(Server).filter(Server.user_id == current_user.id).all()
+def get_servers(db: Session = Depends(get_db)):
+    user = db.query(User).first()  # Текущий пользователь
+    servers = db.query(Server).filter(Server.user_id == user.id).all()
     return servers
 
 @app.post("/api/servers/rent", response_model=schemas.Server)
-def rent_server(request: schemas.RentServerRequest, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def rent_server(request: schemas.RentServerRequest, db: Session = Depends(get_db)):
     server = db.query(Server).filter(Server.id == request.server_id).first()
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-
+    
     if server.is_active:
         raise HTTPException(status_code=400, detail="Server is already active")
-
+    
     # Активируем сервер
     server.is_active = True
     db.commit()
     db.refresh(server)
-
+    
     return server
 
 # Trades API
 
 @app.get("/api/trades", response_model=List[schemas.Trade])
-def get_trades(limit: int = 10, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def get_trades(limit: int = 10, db: Session = Depends(get_db)):
     trades = db.query(Trade).order_by(Trade.timestamp.desc()).limit(limit).all()
     return trades
 
 @app.get("/api/trades/live", response_model=schemas.Trade)
-def get_live_trade(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def get_live_trade(db: Session = Depends(get_db)):
     # Здесь мы просто создаем новую случайную сделку для симуляции
     pairs = ["BTC/USDT", "ETH/USDT", "TON/USDT", "SOL/USDT", "ADA/USDT"]
     pair = random.choice(pairs)
-
+    
     # Генерируем случайные цены
     base_price = random.uniform(100, 50000) if pair != "TON/USDT" else random.uniform(3, 7)
     profit_percentage = random.uniform(0.5, 4.5)
     entry_price = base_price
     exit_price = base_price * (1 + profit_percentage / 100)
-
+    
     # Создаем объект сделки
     trade = Trade(
         id=str(uuid.uuid4()),
@@ -153,30 +136,34 @@ def get_live_trade(current_user: User = Depends(get_current_active_user), db: Se
         profit_percentage=profit_percentage,
         timestamp=datetime.now() - timedelta(seconds=random.randint(5, 60))
     )
-
+    
     # Сохраняем в базу данных
     db.add(trade)
     db.commit()
     db.refresh(trade)
-
+    
     return trade
 
 # Transactions API
 
 @app.get("/api/transactions", response_model=List[schemas.Transaction])
-def get_transactions(transaction_type: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    query = db.query(Transaction).filter(Transaction.user_id == current_user.id)
+def get_transactions(transaction_type: Optional[str] = None, db: Session = Depends(get_db)):
+    user = db.query(User).first()  # Текущий пользователь
+    
+    query = db.query(Transaction).filter(Transaction.user_id == user.id)
     if transaction_type:
         query = query.filter(Transaction.type == transaction_type)
-
+    
     transactions = query.order_by(Transaction.timestamp.desc()).all()
     return transactions
 
 @app.post("/api/transactions/withdraw", response_model=schemas.Transaction)
-def withdraw(request: schemas.WithdrawRequest, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    if current_user.available_balance < request.amount:
+def withdraw(request: schemas.WithdrawRequest, db: Session = Depends(get_db)):
+    user = db.query(User).first()  # Текущий пользователь
+    
+    if user.available_balance < request.amount:
         raise HTTPException(status_code=400, detail="Insufficient balance")
-
+    
     # Создаем транзакцию
     transaction = Transaction(
         id=str(uuid.uuid4()),
@@ -185,68 +172,74 @@ def withdraw(request: schemas.WithdrawRequest, current_user: User = Depends(get_
         currency=request.currency,
         wallet=request.wallet_address,
         hash=f"0x{uuid.uuid4().hex[:8]}...{uuid.uuid4().hex[:4]}",
-        user_id=current_user.id
+        user_id=user.id
     )
-
+    
     # Обновляем баланс пользователя
-    current_user.available_balance -= request.amount
-
+    user.available_balance -= request.amount
+    
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
-
+    
     return transaction
 
 # Tasks API
 
 @app.get("/api/tasks", response_model=List[schemas.UserTask])
-def get_tasks(task_type: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    query = db.query(UserTask).join(Task).filter(UserTask.user_id == current_user.id)
+def get_tasks(task_type: Optional[str] = None, db: Session = Depends(get_db)):
+    user = db.query(User).first()  # Текущий пользователь
+    
+    query = db.query(UserTask).join(Task).filter(UserTask.user_id == user.id)
     if task_type:
         query = query.filter(Task.type == task_type)
-
+    
     user_tasks = query.all()
     return user_tasks
 
 @app.post("/api/tasks/{task_id}/claim")
-def claim_task(task_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def claim_task(task_id: str, db: Session = Depends(get_db)):
+    user = db.query(User).first()  # Текущий пользователь
+    
     user_task = db.query(UserTask).filter(
-        UserTask.user_id == current_user.id,
+        UserTask.user_id == user.id,
         UserTask.task_id == task_id
     ).first()
-
+    
     if not user_task:
         raise HTTPException(status_code=404, detail="Task not found")
-
+    
     if not user_task.is_completed:
         raise HTTPException(status_code=400, detail="Task is not completed yet")
-
+    
     if user_task.is_claimed:
         raise HTTPException(status_code=400, detail="Reward already claimed")
-
+    
     # Получаем информацию о задании
     task = db.query(Task).filter(Task.id == task_id).first()
-
+    
     # Начисляем награду
-    current_user.available_balance += task.reward
-    current_user.total_earnings += task.reward
-
+    user.available_balance += task.reward
+    user.total_earnings += task.reward
+    
     # Помечаем как полученное
     user_task.is_claimed = True
-
+    
     db.commit()
-
+    
     return {"success": True, "reward": task.reward}
 
 # Referrals API
 
 @app.get("/api/referrals/stats", response_model=schemas.ReferralStats)
-def get_referral_stats(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def get_referral_stats(db: Session = Depends(get_db)):
+    user = db.query(User).first()  # Текущий пользователь
+    
     # В реальном приложении здесь будет код для получения статистики рефералов
     # Для демонстрации используем тестовые данные
     return {
         "total_referrals": 24,
-        "total_earned": current_user.referral_earnings,
+        "total_earned": user.referral_earnings,
         "level_1_referrals": 12,
         "level_2_referrals": 12,
         "referral_link": f"https://t.me/evatradebot?start=ref{uuid.uuid4().hex[:8]}"
@@ -258,7 +251,7 @@ def startup_db_client():
     try:
         db = next(get_db())
         user_count = db.query(User).count()
-
+        
         if user_count == 0:
             from app.setup_db import create_mock_data
             create_mock_data()

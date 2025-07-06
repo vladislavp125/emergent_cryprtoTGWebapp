@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine
-from app.models import Base
-from app.database import DATABASE_URL
+from sqlalchemy.orm import sessionmaker
+
+from models import Base
+from database import DATABASE_URL
 import os
 from dotenv import load_dotenv
 import random
@@ -8,7 +10,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Импортируем модели
-from app.models import User, Server, Transaction, Trade, Task, UserTask, Base
+from models import User, Server, Transaction, Trade, Task, UserTask, Base
 
 load_dotenv()
 
@@ -21,7 +23,6 @@ def create_tables():
     print("Таблицы созданы успешно")
 
 def create_mock_data():
-    from sqlalchemy.orm import sessionmaker
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     

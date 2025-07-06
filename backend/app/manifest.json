@@ -1,0 +1,20 @@
+{
+  "name": "EVA AI TRADER",
+  "version": "1.0.0",
+  "description": "A web application for managing crypto transactions and interactions with Telegram.",
+  "author": "Your Name",
+  "repository": "https://github.com/vladislavp125/emergent_cryprtoTGWebapp",
+  "dependencies": {
+    "fastapi": "^0.78.0",
+    "pydantic": "^1.9.0",
+    "sqlalchemy": "^1.4.36",
+    "uvicorn": "^0.17.6"
+  },
+  "devDependencies": {
+    "pytest": "^7.1.2"
+  },
+  "scripts": {
+    "start": "uvicorn backend.app.main:app --host 0.0.0.0 --port 8000",
+    "dev": "uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload"
+  }
+}

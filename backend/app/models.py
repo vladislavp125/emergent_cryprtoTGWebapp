@@ -16,7 +16,7 @@ referrals_association = Table(
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     username = Column(String(50), unique=True, index=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -25,11 +25,12 @@ class User(Base):
     referral_earnings = Column(Float, default=0.0)
     available_balance = Column(Float, default=0.0)
     wallet_address = Column(String(255), nullable=True)
-    
+    is_active = Column(Boolean, default=True)
+
     # Отношения
     servers = relationship("Server", back_populates="user")
     transactions = relationship("Transaction", back_populates="user")
-    
+
     # Рефералы (многие-ко-многим)
     referrals = relationship(
         "User",
@@ -38,7 +39,7 @@ class User(Base):
         secondaryjoin=id==referrals_association.c.referred_id,
         backref="referrers"
     )
-    
+
     # Задания пользователя
     tasks = relationship("UserTask", back_populates="user")
 

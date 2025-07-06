@@ -105,6 +105,7 @@ class User(UserBase):
     server_earnings: float
     referral_earnings: float
     available_balance: float
+    is_active: bool
 
     class Config:
         from_attributes = True
@@ -142,3 +143,11 @@ class ReferralStats(BaseModel):
     level_1_referrals: int
     level_2_referrals: int
     referral_link: str
+
+class TonConnectRequest(BaseModel):
+    username: str
+    wallet_address: str
+
+class TokenData(BaseModel):
+    username: str
+    is_active: bool = True
